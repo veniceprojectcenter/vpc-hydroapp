@@ -81,6 +81,7 @@
 			
 			app = angular.module('hydroapp', ['uiSlider']);
 			app.controller('MapCtrl', ['$scope', '$compile', '$http', '$q', '$timeout', function($scope, $compile, $http, $q, $timeout){
+				$scope.Math = window.Math;
 				$scope.timeIndex = 0;
 				
 				function createHeightSelectorBox(){
@@ -88,7 +89,11 @@
 					info.onAdd = function (map) {
 						var htmlContent = '<div class="info">'+
 							'<p><h4>Time</h4></p>'+
-							'<p><h5 style="margin:0px;">Time ({{modelTimestep.timestep}} s):</h5><slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
+							'<p><h5 style="margin:0px;">'+
+							'{{Math.floor(modelTimestep.timestep/3600%24)}}:00 '+
+							'Day {{Math.floor(modelTimestep.timestep/3600/24)+1}}'+
+							'</h5>'+
+							'<slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
 						this._content = $scope.compiled[0];
@@ -97,26 +102,32 @@
 					return info;
 				}
 				
-				var x = chroma.interpolate.bezier(['red', 'yellow', 'green', 'pink']);
+				var x = chroma.interpolate.bezier(['green', 'yellow', 'red', 'pink']);
 				
 				function updateMarkers(){
-					if($scope.segmentArrows && $scope.modelTimestep && $scope.segmentData){
+					if($scope.segmentArrows && $scope.modelTimestep && $scope.segmentData && $scope.segmentPolygons){
 						for(var segmentId in $scope.segmentArrows){
 							var arrow = $scope.segmentArrows[segmentId];
 							var data = $scope.segmentData[segmentId];
 							if(arrow && data){
 								var vel = $scope.modelTimestep.velocity[segmentId-2001];
 								if(vel!==undefined){
-									if(vel>0.001){
+									if(vel>0.002){
 										arrow.setAngle(data.angle);
+										arrow.setHeadVisible(true);
 									}
-									else if(vel<-0.001){
+									else if(vel<-0.002){
 										arrow.setAngle(data.angle+Math.PI);
+										arrow.setHeadVisible(true);
 									}
 									else{
 										arrow.setAngle(data.angle);
+										arrow.setHeadVisible(false);
 									}
-									arrow.setStyle({fillColor: x(Math.abs(vel)/0.3).hex()});
+									var segmentPolygon = $scope.segmentPolygons[data.segmentId];
+									if(segmentPolygon){
+										segmentPolygon.setStyle({fillColor: x(Math.abs(vel)/0.3).hex()});
+									}
 								}
 							}
 						}
@@ -125,6 +136,7 @@
 				$scope.$watch('modelTimestep', updateMarkers);
 				$scope.$watchCollection('segmentArrows', updateMarkers);
 				$scope.$watchCollection('segmentData', updateMarkers);
+				$scope.$watchCollection('segmentPolygons', updateMarkers);
 				
 				
 				function updateModelTimestep(){
@@ -141,7 +153,7 @@
 					}
 					$scope.mytimeout = $timeout($scope.onTimeout, 200);
 				}
-				$scope.mytimeout = $timeout($scope.onTimeout, 200);
+				$scope.mytimeout = $timeout($scope.onTimeout, 2000);
 				
 				
 				$( document ).ready(function() {
@@ -155,11 +167,12 @@
 							segments: $http.get('segments.geojson')
 								.then(function(result) {
 									if(result.status == 200){
-										return L.geoJson(result.data, {
+										var segmentLayer = L.geoJson(result.data, {
 											style: {
-												fillColor: '#0000FF', fillOpacity: 1.0, weight: 0
+												fillColor: '#0000FF', fillOpacity: 1.0, weight: 0, clickable: false
 											}
 										});
+										return segmentLayer;
 									}
 								}),
 							modelSegments: $http.get('modelSegments.json')
@@ -167,7 +180,7 @@
 									if(result.status == 200){
 										$scope.segmentArrows = {};
 										$scope.segmentData = result.data;
-										var segmentPolygonOptions = {weight: 0, fillColor: '#000000', fillOpacity: 1.0};
+										var segmentPolygonOptions = {weight: 0, fillColor: '#000000', fillOpacity: 1.0, clickable: false};
 										var segmentLayersGroup = new L.FeatureGroup();
 										for(var segmentId in result.data){
 											var segmentData = result.data[segmentId];
@@ -184,11 +197,34 @@
 							modelOutput: $http.get('out.json')
 								.then(function(result) {
 									if(result.status == 200){
-										$scope.modelData = result.data;
+										return $scope.modelData = result.data;
 									}
 								})
 						}
 					).then(function(layers){
+						var validModelSegments = {};
+						var validSegments = {};
+						for(var x in $scope.modelData[0].velocity){
+							var modelId = x*1+2001;
+							validSegments[$scope.segmentData[modelId].segmentId] = true;
+							validModelSegments[modelId] = true;
+						}
+						
+						$scope.segmentPolygons = {};
+						for(var layerId in layers.segments._layers){
+							var layer = layers.segments._layers[layerId];
+							var segmentId = layer.feature.properties.Codice;
+							if(validSegments[segmentId])
+								$scope.segmentPolygons[segmentId] = layer;
+							else
+								layers.segments.removeLayer(layer);
+						}
+						for(var segmentId in $scope.segmentArrows){
+							var arrow = $scope.segmentArrows[segmentId];
+							if(!validModelSegments[segmentId])
+								layers.modelSegments.removeLayer(arrow);
+						}
+						
 						layers.segments.addTo(map);
 						layers.modelSegments.addTo(map);
 						$('#loadingPanel').hide();

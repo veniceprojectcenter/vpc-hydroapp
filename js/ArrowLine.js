@@ -9,6 +9,7 @@ L.ArrowLine = L.Path.extend({
 		this._latlng = latlng;
 		this._mAngle = angle;
 		this._mLength = length;
+		this._mHeadVisible = true;
 	},
 
 	setLatLng: function (latlng) {
@@ -25,6 +26,11 @@ L.ArrowLine = L.Path.extend({
 		this._mLength = length;
 		return this.redraw();
 	},
+
+	setHeadVisible: function (headVisible) {
+		this._mHeadVisible = headVisible;
+		return this.redraw();
+	},
 	
 	getLatLng: function () {
 		return this._latlng;
@@ -36,6 +42,10 @@ L.ArrowLine = L.Path.extend({
 	
 	getLength: function () {
 		return this._mLength;
+	},
+	
+	getHeadVisible: function () {
+		return this._mHeadVisible;
 	},
 
 	projectLatlngs: function () {
@@ -61,8 +71,8 @@ L.ArrowLine = L.Path.extend({
 			a = this.getAngle(),
 			w =  0.00004*l/this.getLength(),//line width
 			aA = Math.PI/4,//arrow angle
-			aW = 0.00005*l/this.getLength(),//arrow line width
-			aL = 0.00025*l/this.getLength(),//arrow line length
+			aW = 0.00004*l/this.getLength(),//arrow line width
+			aL = 0.0002*l/this.getLength(),//arrow line length
 			aExtend = aW/Math.sin(aA)+w/(2*Math.tan(aA));//extension of line length for arrow
 			
 		var bL = p.add([Math.cos(a)*l/2 + Math.sin(a)*w/2, -Math.sin(a)*l/2 + Math.cos(a)*w/2]);
@@ -80,16 +90,19 @@ L.ArrowLine = L.Path.extend({
 		var hT = p.add([-Math.cos(a)*(l/2+aExtend), Math.sin(a)*(l/2+aExtend)]);
 		
 		if (L.Browser.svg) {
-			return 'M' + bL.x + ',' + bL.y +
+			var result = 'M' + bL.x + ',' + bL.y +
 					'L' + bR.x + ',' + bR.y +
-					'L' + tR.x + ',' + tR.y +
-					'L' + hBR.x + ',' + hBR.y +
-					'L' + hTR.x + ',' + hTR.y +
-					'L' + hT.x + ',' + hT.y +
-					'L' + hTL.x + ',' + hTL.y +
-					'L' + hBL.x + ',' + hBL.y +
-					'L' + tL.x + ',' + tL.y +
+					'L' + tR.x + ',' + tR.y;
+			if(this.getHeadVisible())
+				result +='L' + hBR.x + ',' + hBR.y +
+						'L' + hTR.x + ',' + hTR.y +
+						'L' + hT.x + ',' + hT.y +
+						'L' + hTL.x + ',' + hTL.y +
+						'L' + hBL.x + ',' + hBL.y;
+					
+			result += 'L' + tL.x + ',' + tL.y +
 					'z';
+			return result;
 		}
 	}
 });
