@@ -52,12 +52,14 @@
 			}
 			
 			.info {
-				padding: 6px 8px;
+				padding: 10px 10px;
 				font: 14px/16px Arial, Helvetica, sans-serif;
 				background: white;
 				background: rgba(255,255,255,0.9);
 				box-shadow: 0 0 15px rgba(0,0,0,0.2);
 				border-radius: 5px;
+			}
+			.info-width {
 				width: 500px;
 			}
 			.info h4 {
@@ -84,10 +86,10 @@
 				$scope.Math = window.Math;
 				$scope.timeIndex = 0;
 				
-				function createHeightSelectorBox(){
+				function createTimeSelector(){
 					var info = L.control({position: "bottomright"});
 					info.onAdd = function (map) {
-						var htmlContent = '<div class="info">'+
+						var htmlContent = '<div class="info info-width">'+
 							'<p><h4>Time</h4></p>'+
 							'<p><h5 style="margin:0px;">'+
 							'{{Math.floor(modelTimestep.timestep/3600%24)}}:00 '+
@@ -102,7 +104,40 @@
 					return info;
 				}
 				
-				var x = chroma.interpolate.bezier(['green', 'yellow', 'red', 'pink']);
+				function createKey(){
+					var info = L.control({position: "topright"});
+					info.onAdd = function (map) {
+						var htmlContent = '<div class="info">'+
+							'<h4>Key (m/s)</h4>'+
+							'<div>'+
+							'<div ng-repeat="value in velScaleValues"><span style="width:40px;height:20px;display:inline-block;vertical-align:middle;background:{{colorScale(value).hex()}}"/><span style="vertical-align:middle;margin-left:2px;">{{value*velDivisor | number:2}}</span></div>'+
+							'</div>'+
+							'</div>';
+						$scope.compiled = $compile(htmlContent)($scope);
+						this._content = $scope.compiled[0];
+						return this._content;
+					};
+					return info;
+				}
+				
+				function createThanks(){
+					var info = L.control({position: "bottomleft"});
+					info.onAdd = function (map) {
+						var htmlContent = '<div class="info">'+
+							'<h5>Canal model and information provided by <a href="http://www.ismar.cnr.it/">ISMAR</a></h5>'+
+							'<h6>Special thanks to Georg Umgiesser and Elisa Coraci</h6>'+
+							'</div>';
+						$scope.compiled = $compile(htmlContent)($scope);
+						this._content = $scope.compiled[0];
+						return this._content;
+					};
+					return info;
+				}
+				
+				$scope.colorScale = chroma.interpolate.bezier(['green', 'yellow', 'red', 'pink']);
+				$scope.velDivisor = 0.4;
+				$scope.velScaleValues = new Array();
+				for(var i = 0; i<1; i+=0.1)$scope.velScaleValues.push(i);
 				
 				function updateMarkers(){
 					if($scope.segmentArrows && $scope.modelTimestep && $scope.segmentData && $scope.segmentPolygons){
@@ -126,7 +161,7 @@
 									}
 									var segmentPolygon = $scope.segmentPolygons[data.segmentId];
 									if(segmentPolygon){
-										segmentPolygon.setStyle({fillColor: x(Math.abs(vel)/0.3).hex()});
+										segmentPolygon.setStyle({fillColor: $scope.colorScale(Math.abs(vel)/$scope.velDivisor).hex()});
 									}
 								}
 							}
@@ -157,7 +192,9 @@
 				
 				
 				$( document ).ready(function() {
-					createHeightSelectorBox().addTo(map);
+					createTimeSelector().addTo(map);
+					createThanks().addTo(map);
+					createKey().addTo(map);
 					
 				
 					$('#spinner').spin('large', '#fff');
