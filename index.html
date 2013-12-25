@@ -82,7 +82,7 @@
 			});
 			
 			app = angular.module('hydroapp', ['uiSlider']);
-			app.controller('MapCtrl', ['$scope', '$compile', '$http', '$q', '$timeout', function($scope, $compile, $http, $q, $timeout){
+			app.controller('MapCtrl', ['$scope', '$compile', '$http', '$q', '$timeout', '$location', function($scope, $compile, $http, $q, $timeout, $location){
 				$scope.Math = window.Math;
 				$scope.timeIndex = 0;
 				
@@ -91,11 +91,12 @@
 					info.onAdd = function (map) {
 						var htmlContent = '<div class="info info-width">'+
 							'<p><h4>Time</h4></p>'+
-							'<p><h5 style="margin:0px;">'+
-							'{{Math.floor(modelTimestep.timestep/3600%24)}}:00 '+
-							'Day {{Math.floor(modelTimestep.timestep/3600/24)+1}}'+
+							'<p><h5>'+
+							'{{modelTimestep.l}} '+
 							'</h5>'+
 							'<slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
+							'<p><a ng-hide="dataFile==\'2012.json\'" href="?2012.json">View 2012 Run</a>'+
+							'<a ng-hide="dataFile==\'nov7.json\'" href="?nov7.json">View November 2013 Run</a></p>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
 						this._content = $scope.compiled[0];
@@ -145,7 +146,7 @@
 				$scope.colorScale = chroma.interpolate.bezier(['green', 'yellow', 'red', 'pink']);
 				$scope.velDivisor = 0.4;
 				$scope.velScaleValues = new Array();
-				for(var i = 0; i<1; i+=0.1)$scope.velScaleValues.push(i);
+				for(var i = 0; i<1.5; i+=0.1)$scope.velScaleValues.push(i);
 				
 				function updateMarkers(){
 					if($scope.segmentArrows && $scope.modelTimestep && $scope.segmentData && $scope.segmentPolygons){
@@ -153,7 +154,7 @@
 							var arrow = $scope.segmentArrows[segmentId];
 							var data = $scope.segmentData[segmentId];
 							if(arrow && data){
-								var vel = $scope.modelTimestep.velocity[segmentId-2001];
+								var vel = $scope.modelTimestep.v[segmentId-2001];
 								if(vel!==undefined){
 									if(vel>0.002){
 										arrow.setAngle(data.angle);
@@ -207,7 +208,9 @@
 					
 				
 					$('#spinner').spin('large', '#fff');
-					
+					$scope.dataFile = $location.absUrl().split("?")[1];
+					if(!$scope.dataFile)
+						$scope.dataFile = 'nov7.json';
 					$q.all(
 						{
 							segments: $http.get('segments.geojson')
@@ -240,7 +243,7 @@
 										return segmentLayersGroup;
 									}
 								}),
-							modelOutput: $http.get('out.json')
+							modelOutput: $http.get($scope.dataFile)
 								.then(function(result) {
 									if(result.status == 200){
 										return $scope.modelData = result.data;
@@ -250,7 +253,7 @@
 					).then(function(layers){
 						var validModelSegments = {};
 						var validSegments = {};
-						for(var x in $scope.modelData[0].velocity){
+						for(var x in $scope.modelData[0].v){
 							var modelId = x*1+2001;
 							validSegments[$scope.segmentData[modelId].segmentId] = true;
 							validModelSegments[modelId] = true;
