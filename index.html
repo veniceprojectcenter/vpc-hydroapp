@@ -85,18 +85,28 @@
 			app.controller('MapCtrl', ['$scope', '$compile', '$http', '$q', '$timeout', '$location', function($scope, $compile, $http, $q, $timeout, $location){
 				$scope.Math = window.Math;
 				$scope.timeIndex = 0;
+				$scope.dataSets = [
+					{
+						label: 'Week',
+						dateRange: 'November 1, 2013 - November 7, 2013',
+						file: 'nov7.json',
+					},
+					{
+						label: 'Year',
+						dateRange: 'January 1, 2012 - December 31, 2012',
+						file: '2012.json',
+					},
+				];
 				
 				function createTimeSelector(){
 					var info = L.control({position: "bottomright"});
 					info.onAdd = function (map) {
 						var htmlContent = '<div class="info info-width">'+
-							'<p><h4>Time</h4></p>'+
-							'<p><h5>'+
-							'{{modelTimestep.l}} '+
-							'</h5>'+
+							'<p><h4>Canal Currents (<span ng-repeat="dataSet in dataSets" ng-if="dataFile==dataSet.file">{{dataSet.label}}</span>)</h4></p>'+
+							'<p><h5>Hydrodynamic simulation for: <span ng-repeat="dataSet in dataSets" ng-if="dataFile==dataSet.file">{{dataSet.dateRange}}</span></h5></p>'+
+							'<p><h6>{{modelTimestep.l}}</h6>'+
 							'<slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
-							'<p><a ng-hide="dataFile==\'2012.json\'" href="?2012.json">View 2012 Run</a>'+
-							'<a ng-hide="dataFile==\'nov7.json\'" href="?nov7.json">View November 2013 Run</a></p>'+
+							'<p><span ng-repeat="dataSet in dataSets" style="margin-right:10px;" title="{{dataSet.dateRange}}"><a ng-href="?{{dataSet.file}}" ng-if="dataFile!=dataSet.file">{{dataSet.label}}</a><span ng-if="dataFile==dataSet.file">{{dataSet.label}}</span></span></p>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
 						this._content = $scope.compiled[0];
@@ -144,7 +154,7 @@
 				}
 				
 				$scope.colorScale = chroma.interpolate.bezier(['white', '#00ffff', 'green', 'yellow', 'red']);
-				$scope.velDivisor = 0.6;
+				$scope.velDivisor = 0.5;
 				$scope.velScaleValues = new Array();
 				for(var i = 0; i<1.3; i+=0.1)$scope.velScaleValues.push(i);
 				
