@@ -106,10 +106,12 @@
 							'<p><h5>Hydrodynamic simulation for: <span ng-repeat="dataSet in dataSets" ng-if="dataFile==dataSet.file">{{dataSet.dateRange}}</span></h5></p>'+
 							'<p><h6>{{modelTimestep.l}}</h6>'+
 							'<slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
+							'<button style="margin-bottom:10px;" ng-click="togglePlayback()">{{playbackTimer?"Pause":"Play"}}</button>'+
 							'<p><span ng-repeat="dataSet in dataSets" style="margin-right:10px;" title="{{dataSet.dateRange}}"><a ng-href="?{{dataSet.file}}" ng-if="dataFile!=dataSet.file">{{dataSet.label}}</a><span ng-if="dataFile==dataSet.file">{{dataSet.label}}</span></span></p>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
 						this._content = $scope.compiled[0];
+						L.DomEvent.disableClickPropagation(this._content);
 						return this._content;
 					};
 					return info;
@@ -187,8 +189,8 @@
 						}
 					}
 				}
-				$scope.$watch('modelTimestep', updateMarkers);
 				$scope.$watchCollection('segmentArrows', updateMarkers);
+				$scope.$watch('modelTimestep', updateMarkers);
 				$scope.$watchCollection('segmentData', updateMarkers);
 				$scope.$watchCollection('segmentPolygons', updateMarkers);
 				
@@ -201,13 +203,25 @@
 				$scope.$watch('timeIndex', updateModelTimestep);
 				
 				$scope.onTimeout = function(){
-					if($scope.modelData){
-						if($scope.timeIndex < $scope.modelData.length-1)
-							$scope.timeIndex++;
+					if($scope.modelData && $scope.timeIndex < $scope.modelData.length-1){
+						$scope.timeIndex++;
+						$scope.playbackTimer = $timeout($scope.onTimeout, 200);
 					}
-					$scope.mytimeout = $timeout($scope.onTimeout, 200);
+					else
+						$scope.playbackTimer = null;
 				}
-				$scope.mytimeout = $timeout($scope.onTimeout, 2000);
+				$scope.playbackTimer = $timeout($scope.onTimeout, 2000);
+				$scope.togglePlayback = function(){
+					if($scope.playbackTimer){
+						$timeout.cancel($scope.playbackTimer);
+						$scope.playbackTimer = null;
+					}
+					else{
+						if($scope.timeIndex >= $scope.modelData.length-1)
+							$scope.timeIndex = 0;
+						$scope.playbackTimer = $timeout($scope.onTimeout, 200);
+					}
+				};
 				
 				
 				$( document ).ready(function() {
