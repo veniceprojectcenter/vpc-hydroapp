@@ -106,7 +106,8 @@
 							'<p><h5>Hydrodynamic simulation for: <span ng-repeat="dataSet in dataSets" ng-if="dataFile==dataSet.file">{{dataSet.dateRange}}</span></h5></p>'+
 							'<p><h6>{{modelTimestep.l}}</h6>'+
 							'<slider floor="0" ceiling="{{modelData.length-1}}" step="1" precision="0" ng-model="timeIndex"></slider></p>'+
-							'<button style="margin-bottom:10px;" ng-click="togglePlayback()">{{playbackTimer?"Pause":"Play"}}</button>'+
+							'<button style="margin-bottom:10px;margin-right:5px;" ng-click="togglePlayback()">{{playbackTimer?"Pause":"Play"}}</button>'+
+							'<button style="margin-bottom:10px;" ng-click="stepPlayback()">Step</button>'+
 							'<p><span ng-repeat="dataSet in dataSets" style="margin-right:10px;" title="{{dataSet.dateRange}}"><a ng-href="?{{dataSet.file}}" ng-if="dataFile!=dataSet.file">{{dataSet.label}}</a><span ng-if="dataFile==dataSet.file">{{dataSet.label}}</span></span></p>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
@@ -221,6 +222,10 @@
 							$scope.timeIndex = 0;
 						$scope.playbackTimer = $timeout($scope.onTimeout, 200);
 					}
+				};
+				$scope.stepPlayback = function(){
+					if($scope.timeIndex < $scope.modelData.length-1)
+						$scope.timeIndex++;
 				};
 				
 				
