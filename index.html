@@ -76,7 +76,7 @@
 				map = L.map("map-canvas", {minZoom: 12}).setView([45.4375 , 12.334], 15);
 				baseLayer = new L.TileLayer(
 					'http://{s}.tiles.mapbox.com/v3/bennlich.map-8ds9rdrc/{z}/{x}/{y}.png',
-					{ attribution: 'Map tiles © MapBox' }
+					{ attribution: 'Map tiles Â© MapBox' }
 					).addTo(map);
 				L.control.scale().addTo(map);
 			});
@@ -122,9 +122,9 @@
 					var info = L.control({position: "topright"});
 					info.onAdd = function (map) {
 						var htmlContent = '<div class="info">'+
-							'<h4>Key (m/s)</h4>'+
+							'<h4>Water Velocity (m/s)</h4>'+
 							'<div>'+
-							'<div ng-repeat="value in velScaleValues"><span style="width:40px;height:20px;display:inline-block;vertical-align:middle;background:{{colorScale(value).hex()}}"/><span style="vertical-align:middle;margin-left:2px;">{{value*velDivisor | number:2}}</span></div>'+
+							'<div ng-repeat="value in velScaleValues"><span style="width:60px;height:20px;display:inline-block;vertical-align:middle;background:{{colorScale(value).hex()}}"/><span style="vertical-align:middle;margin-left:2px;">{{value*velDivisor | number:2}}</span></div>'+
 							'</div>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
@@ -141,6 +141,11 @@
 						var htmlContent = '<div class="info" style="width:auto;">'+
 							'<span ng-click="showAbout()"><img src="about.png" style="cursor:pointer;padding-right:7px;"></span>'+
 							'<a href="http://veniceprojectcenter.org"><img src="vpc25logo.png"></a>'+
+							'<ul style="margin-top:5px;margin-bottom:0px;">'+
+							'<li><a href="http://canals.veniceprojectcenter.org">Canal Infrastructure App</a></li>'+
+							'<li><a href="http://canals.veniceprojectcenter.org/maintenance">Canal Maintenance App</a></li>'+
+							'<li><a href="http://bridges.veniceprojectcenter.org">Bridge Height App</a></li>'+
+							'</ul>'+
 							'</div>';
 						$scope.compiled = $compile(htmlContent)($scope);
 						this._content = $scope.compiled[0];
@@ -156,7 +161,7 @@
 					$('#aboutPanel').hide();
 				}
 				
-				$scope.colorScale = chroma.interpolate.bezier(['white', '#00ffff', 'green', 'yellow', 'red']);
+				$scope.colorScale = chroma.interpolate.bezier(['white', '#00ffff', '#00FF00', 'yellow', 'red']);
 				$scope.velDivisor = 0.5;
 				$scope.velScaleValues = new Array();
 				for(var i = 0; i<2.01; i+=0.1)$scope.velScaleValues.push(i);
@@ -312,6 +317,25 @@
 				});
 			}]);
 		</script>
+
+	<script type="text/javascript">
+
+	/*GOOGLE ANALYTICS*/
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-47662945-1']);
+	  _gaq.push(['_setDomainName', 'veniceprojectcenter.org']);
+	  _gaq.push(['_trackPageview']);
+	
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+
 	</head>
 	<body ng-controller="MapCtrl">
 		<div style="position:absolute;width:100%;height:100%;">
